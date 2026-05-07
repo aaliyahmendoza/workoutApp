@@ -419,11 +419,32 @@ class _CalendarScreenState extends State<CalendarScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            dateStr,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                dateStr,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              FilledButton.icon(
+                onPressed: () => showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (_) => const _WorkoutStopwatchSheet(),
                 ),
+                icon: const Text('⏱️', style: TextStyle(fontSize: 16)),
+                label: const Text('Timer'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           if (workouts.isEmpty)
@@ -2007,6 +2028,118 @@ class _EditWorkoutDialogState extends State<_EditWorkoutDialog> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _WorkoutStopwatchSheet extends StatefulWidget {
+  const _WorkoutStopwatchSheet();
+
+  @override
+  State<_WorkoutStopwatchSheet> createState() => _WorkoutStopwatchSheetState();
+}
+
+class _WorkoutStopwatchSheetState extends State<_WorkoutStopwatchSheet> {
+  final Stopwatch _stopwatch = Stopwatch();
+  bool _running = false;
+
+  @override
+  void dispose() {
+    _stopwatch.stop();
+    super.dispose();
+  }
+
+  void _toggle() {
+    setState(() {
+      if (_running) {
+        _stopwatch.stop();
+      } else {
+        _stopwatch.start();
+      }
+      _running = !_running;
+    });
+  }
+
+  void _reset() {
+    setState(() {
+      _stopwatch.reset();
+      _stopwatch.stop();
+      _running = false;
+    });
+  }
+
+  String _format(Duration d) {
+    final h = d.inHours;
+    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    if (h > 0) return '$h:$m:$s';
+    return '$m:$s';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 40),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text('Workout Timer',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 32),
+          StreamBuilder<int>(
+            stream: Stream.periodic(const Duration(milliseconds: 100), (i) => i),
+            builder: (context, _) {
+              return Text(
+                _format(_stopwatch.elapsed),
+                style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                      fontSize: 72,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.primary,
+                      letterSpacing: 4,
+                    ),
+              );
+            },
+          ),
+          const SizedBox(height: 40),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              OutlinedButton.icon(
+                onPressed: _reset,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Reset'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+              ),
+              FilledButton.icon(
+                onPressed: _toggle,
+                icon: Icon(_running ? Icons.pause : Icons.play_arrow, size: 28),
+                label: Text(_running ? 'Pause' : 'Start',
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
