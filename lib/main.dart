@@ -20,6 +20,7 @@ import 'screens/calendar/calendar_screen.dart';
 import 'screens/profile/edit_profile_screen.dart';
 import 'widgets/workout/active_workout_card.dart';
 import 'services/user_service.dart';
+import 'services/workout/workout_generator.dart';
 import 'utils/navigation_utils.dart';
 import 'utils/ui_constants.dart';
 
@@ -139,10 +140,22 @@ class _OnboardingGateState extends State<_OnboardingGate> {
       final cloudPrefs = await UserService().loadProfile();
       if (cloudPrefs != null) {
         await DatabaseService().createOrUpdateUserPreferences(cloudPrefs);
+        await DatabaseService().saveWorkoutPlans(WorkoutGenerator.generate7DayPlan(cloudPrefs));
       }
     }
 
-    final prefs = await DatabaseService().getUserPreferences();
+    UserPreferences? prefs = await DatabaseService().getUserPreferences();
+
+    // Local DB missing but user is logged in — try to restore from Firestore
+    if (prefs == null && currentUid != null) {
+      final cloudPrefs = await UserService().loadProfile();
+      if (cloudPrefs != null) {
+        await DatabaseService().createOrUpdateUserPreferences(cloudPrefs);
+        await DatabaseService().saveWorkoutPlans(WorkoutGenerator.generate7DayPlan(cloudPrefs));
+        prefs = cloudPrefs;
+      }
+    }
+
     if (mounted) {
       setState(() {
         _hasCompletedOnboarding = prefs != null;
