@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
 import 'services/database_service.dart';
 import 'screens/auth/login_screen.dart';
@@ -124,6 +125,16 @@ class _OnboardingGateState extends State<_OnboardingGate> {
   }
 
   Future<void> _checkOnboardingStatus() async {
+    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+    final sharedPrefs = await SharedPreferences.getInstance();
+    final storedUid = sharedPrefs.getString('current_user_uid');
+
+    // Different user signed in — clear all local data
+    if (currentUid != null && storedUid != currentUid) {
+      await DatabaseService().clearAllData();
+      await sharedPrefs.setString('current_user_uid', currentUid);
+    }
+
     final prefs = await DatabaseService().getUserPreferences();
     if (mounted) {
       setState(() {
@@ -133,7 +144,15 @@ class _OnboardingGateState extends State<_OnboardingGate> {
     }
   }
 
-  void _completeOnboarding() => setState(() => _hasCompletedOnboarding = true);
+  Future<void> _completeOnboarding() async {
+    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUid != null) {
+      final sharedPrefs = await SharedPreferences.getInstance();
+      await sharedPrefs.setString('current_user_uid', currentUid);
+    }
+    setState(() => _hasCompletedOnboarding = true);
+  }
+
   void _resetOnboarding() => setState(() => _hasCompletedOnboarding = false);
 
   @override
@@ -149,7 +168,7 @@ class _OnboardingGateState extends State<_OnboardingGate> {
     }
 
     if (!_hasCompletedOnboarding) {
-      return OnboardingFlow(onComplete: _completeOnboarding);
+      return OnboardingFlow(onComplete: () => _completeOnboarding());
     }
 
     return HomeScreen(

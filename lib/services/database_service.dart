@@ -249,6 +249,17 @@ class DatabaseService {
     });
   }
 
+  Future<void> clearAllData() async {
+    final db = await isar;
+    await db.writeTxn(() async {
+      await db.userPreferences.clear();
+      await db.workoutPlans.clear();
+      await db.workoutLogs.clear();
+      await db.exerciseLogs.clear();
+      await db.workoutSessions.clear();
+    });
+  }
+
   Future<void> close() async {
     await _isar?.close();
     _isar = null;
