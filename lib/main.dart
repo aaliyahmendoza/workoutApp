@@ -131,7 +131,12 @@ class _OnboardingGateState extends State<_OnboardingGate> {
 
     // Different user signed in — clear all local data
     if (currentUid != null && storedUid != currentUid) {
-      await DatabaseService().clearAllData();
+      try {
+        await DatabaseService().clearAllData();
+      } catch (_) {
+        // If clear fails, close and reopen the DB to get a clean state
+        await DatabaseService().close();
+      }
       await sharedPrefs.setString('current_user_uid', currentUid);
     }
 

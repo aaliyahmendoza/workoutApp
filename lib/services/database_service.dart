@@ -251,13 +251,12 @@ class DatabaseService {
 
   Future<void> clearAllData() async {
     final db = await isar;
-    await db.writeTxn(() async {
-      await db.userPreferences.clear();
-      await db.workoutPlans.clear();
-      await db.workoutLogs.clear();
-      await db.exerciseLogs.clear();
-      await db.workoutSessions.clear();
-    });
+    // Separate transactions — a single tx fails silently when linked records exist
+    await db.writeTxn(() async => await db.exerciseLogs.clear());
+    await db.writeTxn(() async => await db.workoutLogs.clear());
+    await db.writeTxn(() async => await db.workoutSessions.clear());
+    await db.writeTxn(() async => await db.workoutPlans.clear());
+    await db.writeTxn(() async => await db.userPreferences.clear());
   }
 
   Future<void> close() async {
