@@ -132,11 +132,12 @@ class _OnboardingGateState extends State<_OnboardingGate> {
     final storedUid = sharedPrefs.getString('current_user_uid');
 
     if (currentUid != null && storedUid != null && storedUid != currentUid) {
-      // A different user was signed in before — wipe local DB so no data bleeds
-      await DatabaseService().nuclearClear();
+      // Different user — clear only profile/plans (workout logs are uid-scoped)
+      await DatabaseService().deleteUserPreferences();
+      await DatabaseService().deleteAllWorkoutPlans();
       await sharedPrefs.setString('current_user_uid', currentUid);
 
-      // Restore profile from Firestore so returning users skip onboarding
+      // Restore this user's profile from Firestore
       final cloudPrefs = await UserService().loadProfile();
       if (cloudPrefs != null) {
         await DatabaseService().createOrUpdateUserPreferences(cloudPrefs);

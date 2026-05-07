@@ -27,8 +27,13 @@ const WorkoutLogSchema = CollectionSchema(
       name: r'notes',
       type: IsarType.string,
     ),
-    r'workoutType': PropertySchema(
+    r'uid': PropertySchema(
       id: 2,
+      name: r'uid',
+      type: IsarType.string,
+    ),
+    r'workoutType': PropertySchema(
+      id: 3,
       name: r'workoutType',
       type: IsarType.string,
     )
@@ -39,6 +44,19 @@ const WorkoutLogSchema = CollectionSchema(
   deserializeProp: _workoutLogDeserializeProp,
   idName: r'id',
   indexes: {
+    r'uid': IndexSchema(
+      id: 8193695471701937315,
+      name: r'uid',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'uid',
+          type: IndexType.hash,
+          caseSensitive: true,
+        )
+      ],
+    ),
     r'date': IndexSchema(
       id: -7552997827385218417,
       name: r'date',
@@ -80,6 +98,7 @@ int _workoutLogEstimateSize(
       bytesCount += 3 + value.length * 3;
     }
   }
+  bytesCount += 3 + object.uid.length * 3;
   bytesCount += 3 + object.workoutType.length * 3;
   return bytesCount;
 }
@@ -92,7 +111,8 @@ void _workoutLogSerialize(
 ) {
   writer.writeDateTime(offsets[0], object.date);
   writer.writeString(offsets[1], object.notes);
-  writer.writeString(offsets[2], object.workoutType);
+  writer.writeString(offsets[2], object.uid);
+  writer.writeString(offsets[3], object.workoutType);
 }
 
 WorkoutLog _workoutLogDeserialize(
@@ -105,7 +125,8 @@ WorkoutLog _workoutLogDeserialize(
   object.date = reader.readDateTime(offsets[0]);
   object.id = id;
   object.notes = reader.readStringOrNull(offsets[1]);
-  object.workoutType = reader.readString(offsets[2]);
+  object.uid = reader.readString(offsets[2]);
+  object.workoutType = reader.readString(offsets[3]);
   return object;
 }
 
@@ -121,6 +142,8 @@ P _workoutLogDeserializeProp<P>(
     case 1:
       return (reader.readStringOrNull(offset)) as P;
     case 2:
+      return (reader.readString(offset)) as P;
+    case 3:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -222,6 +245,51 @@ extension WorkoutLogQueryWhere
         upper: upperId,
         includeUpper: includeUpper,
       ));
+    });
+  }
+
+  QueryBuilder<WorkoutLog, WorkoutLog, QAfterWhereClause> uidEqualTo(
+      String uid) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'uid',
+        value: [uid],
+      ));
+    });
+  }
+
+  QueryBuilder<WorkoutLog, WorkoutLog, QAfterWhereClause> uidNotEqualTo(
+      String uid) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'uid',
+              lower: [],
+              upper: [uid],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'uid',
+              lower: [uid],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'uid',
+              lower: [uid],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'uid',
+              lower: [],
+              upper: [uid],
+              includeUpper: false,
+            ));
+      }
     });
   }
 
@@ -571,6 +639,136 @@ extension WorkoutLogQueryFilter
     });
   }
 
+  QueryBuilder<WorkoutLog, WorkoutLog, QAfterFilterCondition> uidEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'uid',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WorkoutLog, WorkoutLog, QAfterFilterCondition> uidGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'uid',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WorkoutLog, WorkoutLog, QAfterFilterCondition> uidLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'uid',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WorkoutLog, WorkoutLog, QAfterFilterCondition> uidBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'uid',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WorkoutLog, WorkoutLog, QAfterFilterCondition> uidStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'uid',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WorkoutLog, WorkoutLog, QAfterFilterCondition> uidEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'uid',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WorkoutLog, WorkoutLog, QAfterFilterCondition> uidContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'uid',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WorkoutLog, WorkoutLog, QAfterFilterCondition> uidMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'uid',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WorkoutLog, WorkoutLog, QAfterFilterCondition> uidIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'uid',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<WorkoutLog, WorkoutLog, QAfterFilterCondition> uidIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'uid',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<WorkoutLog, WorkoutLog, QAfterFilterCondition>
       workoutTypeEqualTo(
     String value, {
@@ -801,6 +999,18 @@ extension WorkoutLogQuerySortBy
     });
   }
 
+  QueryBuilder<WorkoutLog, WorkoutLog, QAfterSortBy> sortByUid() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'uid', Sort.asc);
+    });
+  }
+
+  QueryBuilder<WorkoutLog, WorkoutLog, QAfterSortBy> sortByUidDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'uid', Sort.desc);
+    });
+  }
+
   QueryBuilder<WorkoutLog, WorkoutLog, QAfterSortBy> sortByWorkoutType() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'workoutType', Sort.asc);
@@ -852,6 +1062,18 @@ extension WorkoutLogQuerySortThenBy
     });
   }
 
+  QueryBuilder<WorkoutLog, WorkoutLog, QAfterSortBy> thenByUid() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'uid', Sort.asc);
+    });
+  }
+
+  QueryBuilder<WorkoutLog, WorkoutLog, QAfterSortBy> thenByUidDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'uid', Sort.desc);
+    });
+  }
+
   QueryBuilder<WorkoutLog, WorkoutLog, QAfterSortBy> thenByWorkoutType() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'workoutType', Sort.asc);
@@ -880,6 +1102,13 @@ extension WorkoutLogQueryWhereDistinct
     });
   }
 
+  QueryBuilder<WorkoutLog, WorkoutLog, QDistinct> distinctByUid(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'uid', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<WorkoutLog, WorkoutLog, QDistinct> distinctByWorkoutType(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -905,6 +1134,12 @@ extension WorkoutLogQueryProperty
   QueryBuilder<WorkoutLog, String?, QQueryOperations> notesProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'notes');
+    });
+  }
+
+  QueryBuilder<WorkoutLog, String, QQueryOperations> uidProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'uid');
     });
   }
 

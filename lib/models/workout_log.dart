@@ -7,9 +7,12 @@ class WorkoutLog {
   Id id = Isar.autoIncrement;
 
   @Index()
+  String uid = '';
+
+  @Index()
   late DateTime date;
 
-  late String workoutType; // 'full body', 'lifting', 'cardio', 'arms', 'legs', etc.
+  late String workoutType;
 
   String? notes;
 

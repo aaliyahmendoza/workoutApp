@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/user_preferences.dart';
@@ -130,17 +131,17 @@ class DatabaseService {
 
   // ==================== WORKOUT LOG CRUD ====================
 
+  String get _uid => FirebaseAuth.instance.currentUser?.uid ?? '';
+
   Future<WorkoutLog> createWorkoutLog(WorkoutLog log, List<ExerciseLog> exercises) async {
     final db = await isar;
+    log.uid = _uid;
 
     await db.writeTxn(() async {
-      // Save exercise logs first
       for (var exercise in exercises) {
         exercise.loggedAt = DateTime.now();
         await db.exerciseLogs.put(exercise);
       }
-
-      // Save workout log and link exercises
       log.id = await db.workoutLogs.put(log);
       await log.exercises.save();
       for (var exercise in exercises) {
@@ -156,13 +157,15 @@ class DatabaseService {
     final db = await isar;
     return await db.workoutLogs
         .filter()
+        .uidEqualTo(_uid)
+        .and()
         .dateBetween(start, end)
         .findAll();
   }
 
   Future<List<WorkoutLog>> getAllWorkoutLogs() async {
     final db = await isar;
-    return await db.workoutLogs.where().findAll();
+    return await db.workoutLogs.filter().uidEqualTo(_uid).findAll();
   }
 
   Future<WorkoutLog?> getWorkoutLogByDate(DateTime date) async {
@@ -172,6 +175,8 @@ class DatabaseService {
 
     final logs = await db.workoutLogs
         .filter()
+        .uidEqualTo(_uid)
+        .and()
         .dateBetween(startOfDay, endOfDay)
         .findAll();
 
@@ -180,42 +185,38 @@ class DatabaseService {
 
   Future<Map<String, double>> getPersonalRecords() async {
     final db = await isar;
-    final allExercises = await db.exerciseLogs.where().findAll();
-
+    final userLogs = await db.workoutLogs.filter().uidEqualTo(_uid).findAll();
     final prs = <String, double>{};
-
-    for (var exercise in allExercises) {
-      if (exercise.sets != null) {
-        for (var set in exercise.sets!) {
-          if (set.weight != null) {
-            final currentPR = prs[exercise.exerciseName] ?? 0.0;
-            if (set.weight! > currentPR) {
-              prs[exercise.exerciseName] = set.weight!;
+    for (var log in userLogs) {
+      await log.exercises.load();
+      for (var exercise in log.exercises) {
+        if (exercise.sets != null) {
+          for (var set in exercise.sets!) {
+            if (set.weight != null) {
+              final currentPR = prs[exercise.exerciseName] ?? 0.0;
+              if (set.weight! > currentPR) prs[exercise.exerciseName] = set.weight!;
             }
           }
         }
       }
     }
-
     return prs;
   }
 
   Future<Map<String, double>> getWeeklyPersonalRecords() async {
     final db = await isar;
     final now = DateTime.now();
-
-    // Get the start of this week (Monday)
     final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
     final startOfWeekNormalized = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
 
-    // Get workouts from this week
     final weekLogs = await db.workoutLogs
         .filter()
+        .uidEqualTo(_uid)
+        .and()
         .dateGreaterThan(startOfWeekNormalized)
         .findAll();
 
     final prs = <String, double>{};
-
     for (var log in weekLogs) {
       await log.exercises.load();
       for (var exercise in log.exercises) {
@@ -223,15 +224,12 @@ class DatabaseService {
           for (var set in exercise.sets!) {
             if (set.weight != null) {
               final currentPR = prs[exercise.exerciseName] ?? 0.0;
-              if (set.weight! > currentPR) {
-                prs[exercise.exerciseName] = set.weight!;
-              }
+              if (set.weight! > currentPR) prs[exercise.exerciseName] = set.weight!;
             }
           }
         }
       }
     }
-
     return prs;
   }
 
