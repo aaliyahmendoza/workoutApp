@@ -6,6 +6,7 @@ import '../../models/workout_log.dart';
 import '../../models/user_preferences.dart';
 import '../../services/database_service.dart';
 import '../../utils/unit_converter.dart';
+import '../../widgets/exercise/countdown_timer.dart';
 import 'log_workout_dialog.dart';
 
 class CalendarScreen extends StatefulWidget {
@@ -2041,41 +2042,17 @@ class _WorkoutStopwatchSheet extends StatefulWidget {
 }
 
 class _WorkoutStopwatchSheetState extends State<_WorkoutStopwatchSheet> {
-  final Stopwatch _stopwatch = Stopwatch();
-  bool _running = false;
+  int _seconds = 60;
+  // ignore: unused_field
+  int _timerKey = 0;
 
-  @override
-  void dispose() {
-    _stopwatch.stop();
-    super.dispose();
-  }
-
-  void _toggle() {
-    setState(() {
-      if (_running) {
-        _stopwatch.stop();
-      } else {
-        _stopwatch.start();
-      }
-      _running = !_running;
-    });
-  }
-
-  void _reset() {
-    setState(() {
-      _stopwatch.reset();
-      _stopwatch.stop();
-      _running = false;
-    });
-  }
-
-  String _format(Duration d) {
-    final h = d.inHours;
-    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
-    if (h > 0) return '$h:$m:$s';
-    return '$m:$s';
-  }
+  static const _presets = [
+    ('1 min', 60),
+    ('2 min', 120),
+    ('3 min', 180),
+    ('5 min', 300),
+    ('10 min', 600),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -2084,61 +2061,101 @@ class _WorkoutStopwatchSheetState extends State<_WorkoutStopwatchSheet> {
         color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 40),
+      padding: EdgeInsets.only(
+        left: 24, right: 24, top: 12,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 32,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 40,
-            height: 4,
+            width: 40, height: 4,
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 24),
-          Text('Workout Timer',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
-          const SizedBox(height: 32),
-          StreamBuilder<int>(
-            stream: Stream.periodic(const Duration(milliseconds: 100), (i) => i),
-            builder: (context, _) {
-              return Text(
-                _format(_stopwatch.elapsed),
-                style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                      fontSize: 72,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.primary,
-                      letterSpacing: 4,
-                    ),
-              );
-            },
-          ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 20),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              OutlinedButton.icon(
-                onPressed: _reset,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Reset'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              Text('Workout Timer',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+              const Spacer(),
+              IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          CountdownTimer(
+            key: ValueKey(_timerKey),
+            initialSeconds: _seconds,
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Duration', style: Theme.of(context).textTheme.titleMedium),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-              ),
-              FilledButton.icon(
-                onPressed: _toggle,
-                icon: Icon(_running ? Icons.pause : Icons.play_arrow, size: 28),
-                label: Text(_running ? 'Pause' : 'Start',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                child: Text(
+                  _seconds >= 60
+                      ? '${_seconds ~/ 60}m ${_seconds % 60 == 0 ? '' : '${_seconds % 60}s'}'.trim()
+                      : '${_seconds}s',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
               ),
             ],
           ),
+          Slider(
+            value: _seconds.toDouble(),
+            min: 15,
+            max: 600,
+            divisions: 117,
+            label: _seconds >= 60 ? '${_seconds ~/ 60}m ${_seconds % 60 == 0 ? '' : '${_seconds % 60}s'}'.trim() : '${_seconds}s',
+            onChanged: (v) => setState(() {
+              _seconds = v.round();
+              _timerKey++;
+            }),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('15s', style: Theme.of(context).textTheme.bodySmall),
+              Text('10m', style: Theme.of(context).textTheme.bodySmall),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: _presets.map((p) {
+                final selected = _seconds == p.$2;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: ChoiceChip(
+                    label: Text(p.$1),
+                    selected: selected,
+                    onSelected: (_) => setState(() {
+                      _seconds = p.$2;
+                      _timerKey++;
+                    }),
+                    selectedColor: Theme.of(context).colorScheme.primary,
+                    labelStyle: TextStyle(
+                      color: selected ? Colors.white : null,
+                      fontWeight: selected ? FontWeight.w600 : null,
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 8),
         ],
       ),
     );
