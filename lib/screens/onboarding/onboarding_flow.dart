@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import '../../models/user_preferences.dart';
 import '../../services/database_service.dart';
+import '../../services/user_service.dart';
 import '../../services/workout/workout_generator.dart';
 import 'welcome_screen.dart';
 import 'goal_selection_screen.dart';
@@ -80,6 +81,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     );
 
     await _dbService.createOrUpdateUserPreferences(preferences);
+    await UserService().saveProfile(preferences);
 
     // Generate 7-day workout plan
     final workoutPlans = WorkoutGenerator.generate7DayPlan(preferences);

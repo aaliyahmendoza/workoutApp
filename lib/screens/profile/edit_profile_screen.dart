@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/user_preferences.dart';
 import '../../services/database_service.dart';
+import '../../services/user_service.dart';
 import '../../utils/unit_converter.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -51,6 +52,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       updatedAt: DateTime.now(),
     );
     await _dbService.createOrUpdateUserPreferences(updated);
+    await UserService().saveProfile(updated);
     if (mounted) {
       setState(() => _isSaving = false);
       ScaffoldMessenger.of(context).showSnackBar(

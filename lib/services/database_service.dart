@@ -259,6 +259,11 @@ class DatabaseService {
     await db.writeTxn(() async => await db.userPreferences.clear());
   }
 
+  Future<void> nuclearClear() async {
+    await _isar?.close(deleteFromDisk: true);
+    _isar = null;
+  }
+
   Future<void> close() async {
     await _isar?.close();
     _isar = null;

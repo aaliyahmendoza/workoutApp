@@ -19,6 +19,7 @@ import 'screens/exercise_library/exercise_library_screen.dart';
 import 'screens/calendar/calendar_screen.dart';
 import 'screens/profile/edit_profile_screen.dart';
 import 'widgets/workout/active_workout_card.dart';
+import 'services/user_service.dart';
 import 'utils/navigation_utils.dart';
 import 'utils/ui_constants.dart';
 
@@ -129,15 +130,16 @@ class _OnboardingGateState extends State<_OnboardingGate> {
     final sharedPrefs = await SharedPreferences.getInstance();
     final storedUid = sharedPrefs.getString('current_user_uid');
 
-    // Different user signed in — clear all local data
     if (currentUid != null && storedUid != currentUid) {
-      try {
-        await DatabaseService().clearAllData();
-      } catch (_) {
-        // If clear fails, close and reopen the DB to get a clean state
-        await DatabaseService().close();
-      }
+      // Different user — wipe the entire local DB so no data bleeds across accounts
+      await DatabaseService().nuclearClear();
       await sharedPrefs.setString('current_user_uid', currentUid);
+
+      // Restore profile from Firestore so returning users skip onboarding
+      final cloudPrefs = await UserService().loadProfile();
+      if (cloudPrefs != null) {
+        await DatabaseService().createOrUpdateUserPreferences(cloudPrefs);
+      }
     }
 
     final prefs = await DatabaseService().getUserPreferences();
