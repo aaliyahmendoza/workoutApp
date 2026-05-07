@@ -85,7 +85,7 @@ class _LogWorkoutDialogState extends State<LogWorkoutDialog> {
 
     // Create workout log
     final workoutLog = WorkoutLog()
-      ..date = widget.date
+      ..date = DateTime(widget.date.year, widget.date.month, widget.date.day)
       ..workoutType = _selectedWorkoutType
       ..notes = _notesController.text.isEmpty ? null : _notesController.text;
 

@@ -205,8 +205,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return Card(
       margin: const EdgeInsets.all(16),
       child: TableCalendar<WorkoutLog>(
-        firstDay: DateTime.utc(2020, 1, 1),
-        lastDay: DateTime.utc(2030, 12, 31),
+        firstDay: DateTime(2020, 1, 1),
+        lastDay: DateTime(2030, 12, 31),
         focusedDay: _focusedDay,
         selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
         eventLoader: _getEventsForDay,
