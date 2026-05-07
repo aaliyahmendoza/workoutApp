@@ -131,8 +131,8 @@ class _OnboardingGateState extends State<_OnboardingGate> {
     final sharedPrefs = await SharedPreferences.getInstance();
     final storedUid = sharedPrefs.getString('current_user_uid');
 
-    if (currentUid != null && storedUid != currentUid) {
-      // Different user — wipe the entire local DB so no data bleeds across accounts
+    if (currentUid != null && storedUid != null && storedUid != currentUid) {
+      // A different user was signed in before — wipe local DB so no data bleeds
       await DatabaseService().nuclearClear();
       await sharedPrefs.setString('current_user_uid', currentUid);
 
@@ -294,12 +294,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(width: 4),
         ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.slideToPage(const ExerciseLibraryScreen()),
-        icon: const Icon(Icons.search),
-        label: const Text('Exercise Library'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
       body: SingleChildScrollView(
         child: Padding(
