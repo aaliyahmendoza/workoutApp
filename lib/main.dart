@@ -251,10 +251,9 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
     if (confirmed == true) {
-      await _dbService.deleteUserPreferences();
-      await _dbService.deleteAllWorkoutPlans();
       await AuthService().signOut();
-      // StreamBuilder in AppInitializer will automatically navigate to LoginScreen
+      // Local data stays — it's scoped to this user. If a different account
+      // signs in next, the nuclear clear in _checkOnboardingStatus wipes it.
     }
   }
 
