@@ -20,16 +20,21 @@ class UserService {
   Future<void> saveProfile(UserPreferences prefs) async {
     final doc = _profileDoc;
     if (doc == null) return;
-    await doc.set({
-      'goal': prefs.goal?.name,
-      'age': prefs.age,
-      'weight': prefs.weight,
-      'height': prefs.height,
-      'fitnessLevel': prefs.fitnessLevel?.name,
-      'weightUnit': prefs.weightUnit.name,
-      'heightUnit': prefs.heightUnit.name,
-      'updatedAt': DateTime.now().toIso8601String(),
-    });
+    try {
+      await doc.set({
+        'goal': prefs.goal?.name,
+        'age': prefs.age,
+        'weight': prefs.weight,
+        'height': prefs.height,
+        'fitnessLevel': prefs.fitnessLevel?.name,
+        'weightUnit': prefs.weightUnit.name,
+        'heightUnit': prefs.heightUnit.name,
+        'updatedAt': DateTime.now().toIso8601String(),
+      });
+    } catch (e) {
+      // ignore: avoid_print
+      print('[UserService] saveProfile failed: $e');
+    }
   }
 
   Future<UserPreferences?> loadProfile() async {

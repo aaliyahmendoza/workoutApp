@@ -1,1 +1,25 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"fitflow-aaliyah-2026-f9297","appId":"1:78846634413:android:e585df5d8ea3d9e6639924","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"fitflow-aaliyah-2026-f9297","configurations":{"android":"1:78846634413:android:e585df5d8ea3d9e6639924","ios":"1:78846634413:ios:f5cb7d9f90bc96e9639924"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "fitflow-aaliyah-2026-f9297",
+          "appId": "1:78846634413:android:e585df5d8ea3d9e6639924",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "fitflow-aaliyah-2026-f9297",
+          "configurations": {
+            "android": "1:78846634413:android:e585df5d8ea3d9e6639924",
+            "ios": "1:78846634413:ios:f5cb7d9f90bc96e9639924"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules"
+  }
+}
